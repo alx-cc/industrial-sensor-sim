@@ -3,12 +3,12 @@
 A micro C++17/20 project simulating temperature and pressure readings, buffering them in a lock-free ring buffer, processing with a moving average filter, and publishing results to an MQTT broker.
 
 ## Features
-- Simulated temperature & pressure sensors
-- Lock-free SPSC ring buffer
-- Moving average filter
-- MQTT publishing
-- Minimal JSON config
-- Unit tests (GoogleTest)
+- Simulated temperature & pressure sensors (in-progress)
+- Lock-free SPSC ring buffer (in-progress)
+- Moving average filter (in-progress)
+- MQTT publishing (in-progress)
+- Minimal JSON config (in-progress)
+- Unit tests (GoogleTest) (in-progress)
 
 ## Directory Structure
 - src/        (main source)
@@ -16,7 +16,7 @@ A micro C++17/20 project simulating temperature and pressure readings, buffering
 - test/       (unit tests)
 
 ## Build
-Requires CMake >=3.14, C++17 or newer, GoogleTest, and an MQTT client library (e.g., Eclipse Paho MQTT C++).
+Requires CMake >=3.14, C++17 or newer. Will require GoogleTest (when added), and an MQTT client library (e.g., Eclipse Paho MQTT C++) (when added).
 
 ```sh
 mkdir build
