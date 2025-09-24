@@ -23,10 +23,11 @@ mkdir build
 cd build
 cmake ..
 make
+make install DESTDIR=./_staging  # optional local install for packaging
 ```
 
 ## Run
 See main.cpp for usage. MQTT broker must be running (e.g., Eclipse Mosquitto).
 
 ## License
-MIT
+MIT. See LICENSE.

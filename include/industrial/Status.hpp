@@ -15,8 +15,8 @@ namespace industrial {
         static constexpr Status ok() noexcept { return Status(StatusCode::OK); }
         static constexpr Status invalid() noexcept { return Status(StatusCode::InvalidArgument); }
 
-    // Read-only observers
-    constexpr bool is_ok() const noexcept { return status_ == StatusCode::OK; }
+        // Read-only observers
+        constexpr bool is_ok() const noexcept { return status_ == StatusCode::OK; }
         constexpr StatusCode code() const noexcept { return status_; }
 
     private:

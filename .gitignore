@@ -1,0 +1,21 @@
+# Out-of-source build directories
+build/
+build-*/
+cmake-build-*/
+
+# CMake in-source files (in case someone configures in-tree)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+Makefile
+install_manifest.txt
+
+# Ninja
+*.ninja
+.ninja_deps
+.ninja_log
+
+# Local staged install output
+_staging/
