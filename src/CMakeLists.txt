@@ -1,5 +1,7 @@
 add_executable(sensor_sim
     main.cpp
+    SimpleSPSC.cpp
+    SimSensor.cpp
 )
 
 target_include_directories(sensor_sim PRIVATE
