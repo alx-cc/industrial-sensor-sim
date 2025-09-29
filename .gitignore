@@ -1,6 +1,7 @@
 # Out-of-source build directories
 build/
 build-*/
+_build/
 cmake-build-*/
 
 # CMake in-source files (in case someone configures in-tree)
@@ -11,6 +12,9 @@ CTestTestfile.cmake
 Testing/
 Makefile
 install_manifest.txt
+
+#vscode settings
+.vscode/
 
 # Ninja
 *.ninja
