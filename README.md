@@ -3,7 +3,7 @@
 A micro C++17/20 project simulating temperature and pressure readings, buffering them in a lock-free ring buffer, processing with a moving average filter, and publishing results to an MQTT broker.
 
 ## Features
-- Simulated temperature & pressure sensors (in-progress)
+- Simulated temperature & pressure sensors 
 - Lock-free SPSC ring buffer (in-progress)
 - Moving average filter (in-progress)
 - MQTT publishing (in-progress)
