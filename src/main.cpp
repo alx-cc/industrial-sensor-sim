@@ -30,12 +30,6 @@ int main() {
     using namespace industrial;
     using clock = std::chrono::steady_clock;
 
-    SensorSample sample{
-        .ts = clock::now(),
-        .temperature_c = 23.5f,
-        .pressure_kpa = 101.3f,
-    };
-
     // Example: run producer for 20 samples at 100ms
     SimpleSPSC q;
     SimSensor sensor;
