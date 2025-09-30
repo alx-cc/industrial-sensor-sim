@@ -30,6 +30,6 @@ public:
     [[nodiscard]] SensorSample read() const noexcept;
 
 private:
-    const Default_Config cfg_;
+    const Default_Config cfg_{};
 };
 } // namespace industrial
