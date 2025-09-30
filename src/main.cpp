@@ -28,7 +28,6 @@ static void producer_task(industrial::SimpleSPSC& q,
 
 int main() {
     using namespace industrial;
-    using clock = std::chrono::steady_clock;
 
     // Example: run producer for 20 samples at 100ms
     SimpleSPSC q;
