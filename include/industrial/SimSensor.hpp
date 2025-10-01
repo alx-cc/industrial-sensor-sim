@@ -1,5 +1,8 @@
 #pragma once
-#include "industrial/sensor_sample.hpp"
+// NOTE: This is a host-side simulator for an instrument. In true embedded deployments,
+// this class would be replaced by a hardware driver reading real sensors, not code
+// synthesizing values.
+#include "industrial/SensorSample.hpp"
 
 namespace industrial {
 
@@ -23,11 +26,11 @@ public:
     };
 
     // Inline ctors using a member-initializer list; default ctor delegates to Default_Config{}.
-    explicit SimSensor(const Default_Config &cfg) noexcept : cfg_{cfg} {}
-    SimSensor() noexcept = default; // using 'default' so it is non user-defined, allowing triviality
+    explicit SimSensor(const Default_Config &cfg) : cfg_{cfg} {}
+    SimSensor() = default; // defaulted constructor; no noexcept
 
     // Generate one sample at call time; no I/O, no allocation.
-    [[nodiscard]] SensorSample read() const noexcept;
+    [[nodiscard]] SensorSample read() const;
 
 private:
     const Default_Config cfg_{};

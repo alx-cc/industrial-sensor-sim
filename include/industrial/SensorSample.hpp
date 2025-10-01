@@ -4,7 +4,7 @@
 
 namespace industrial {
 
-using TimePoint = std::chrono::steady_clock::time_point;
+using TimePoint = std::chrono::steady_clock::time_point; // Host demo type; on embedded prefer HAL/RTOS tick or device timer
 
 struct SensorSample {
     TimePoint ts{};            // capture time

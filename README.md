@@ -29,5 +29,14 @@ make install DESTDIR=./_staging  # optional local install for packaging
 ## Run
 See main.cpp for usage. MQTT broker must be running (e.g., Eclipse Mosquitto).
 
+## Embedded vs Host notes
+- SimSensor is a host-side simulator (std::chrono, std::random). On embedded, replace with hardware drivers/ISRs reading real sensors.
+- SPSC ring buffers:
+	- `SpscRing<T,N>`: fixed-cap, no-heap; embedded-friendly.
+	- `SpscRing` (heap): allocate once in ctor; fine for host/tools.
+- Time/timestamps: prefer HAL/RTOS tick counters or device timers over `std::chrono` on MCU.
+- Concurrency: prefer RTOS tasks/semaphores or a cooperative main loop; avoid `std::thread` on bare metal.
+- Logging: avoid `std::cout`; use a lightweight UART logger or disable logs in firmware builds.
+
 ## License
 MIT. See LICENSE.
