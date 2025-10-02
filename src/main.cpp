@@ -1,6 +1,5 @@
-// NOTE: These standard facilities are convenient for a host demo but are 
-// not embedded-friendly. For embedded, prefer lightweight/log-free builds,
-// hardware timers/RTOS ticks, and RTOS tasks or a single-threaded main loop.
+// NOTE: Using standard facilities for host demo - not embedded-friendly. 
+// For embedded, prefer lightweight/log-free builds, hardware timers/RTOS ticks, and RTOS tasks. 
 
 #include <iostream>   // std::cout: replace with UART/log ring or disable in firmware
 #include <cstdlib>    // std::strtoul/getenv for simple CLI parsing (host-only)
@@ -58,7 +57,7 @@ static void consumer_task_runtime(industrial::SpscRing<industrial::SensorSample,
                       << "), P=" << s.pressure_kpa
                       << " (avg=" << p_smooth << ")\n"; // std::cout is heavy; use lightweight logging
 
-            // Optional: publish a tiny CSV payload to MQTT when available.
+            // publish a tiny CSV payload to MQTT when available.
             if (mqtt && mqtt->is_connected()) {
                 char buf[160];
                 // CSV: temp,avgTemp,press,avgPress
@@ -67,8 +66,8 @@ static void consumer_task_runtime(industrial::SpscRing<industrial::SensorSample,
                     (void)mqtt->publish(mqtt_topic, buf, (size_t)std::strlen(buf), 0, false);
                 }
             }
-        } else {
-            // Backoff a bit to avoid busy spin; in embedded, this might be a wait instruction.
+        } else { 
+            // idle poll at ~200Hz; using sleep_for in lieu of a platform-specific wait instruction
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
@@ -106,7 +105,9 @@ int main(int argc, char** argv) {
         std::cout << "mqtt: disabled (library missing or connect failed)\n";
     }
 
-    // Parse optional CLI arg for moving average window; default 8. Host-only convenience.
+    // Parse optional CLI args: [window] [count]
+    // window: moving average window (default 8)
+    // count: number of samples to produce/consume (default 50)
     unsigned long req = 8;
     if (argc > 1 && argv[1] != nullptr) {
         unsigned long v = std::strtoul(argv[1], nullptr, 10);
@@ -117,10 +118,18 @@ int main(int argc, char** argv) {
     if (window > 256u) window = 256u;
     std::cout << "moving average window set to " << window << "\n";
 
-    // Run producer and consumer concurrently: host-only demo using std::thread.
-    // On embedded, prefer RTOS tasks or a cooperative main loop plus ISRs.
-    std::thread prod([&]{ producer_task(q, sensor, 50, std::chrono::milliseconds(50)); });
-    std::thread cons([&]{ consumer_task_runtime(q, 50, std::chrono::milliseconds(5000), window,
+    unsigned long count_ul = 50;
+    if (argc > 2 && argv[2] != nullptr) {
+        unsigned long v = std::strtoul(argv[2], nullptr, 10);
+        if (v > 0) count_ul = v;
+    }
+    std::size_t sample_count = static_cast<std::size_t>(count_ul);
+    std::cout << "sample count set to " << sample_count << "\n";
+
+    // Run producer and consumer concurrently: host-only demo using std::thread
+    // On embedded, prefer RTOS tasks or a cooperative main loop plus ISRs
+    std::thread prod([&]{ producer_task(q, sensor, sample_count, std::chrono::milliseconds(50)); });
+    std::thread cons([&]{ consumer_task_runtime(q, sample_count, std::chrono::milliseconds(5000), window,
                                                 mqtt_on ? &mqtt : nullptr, topic); });
     prod.join(); // thread join is a host primitive; on RTOS use task sync or semaphores
     cons.join();
