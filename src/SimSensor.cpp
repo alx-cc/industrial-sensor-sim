@@ -1,12 +1,21 @@
-// NOTE: Simulation code: uses std::chrono and std::random to synthesize data. Not embedded-friendly;
-// real firmware would read hardware sensors via drivers/ISRs and avoid host RNG/time APIs.
+/**
+ * @file SimSensor.cpp
+ * @brief Host-side simulator that synthesizes temperature and pressure samples.
+ *
+ * Implements SimSensor::read() using steady_clock time and a noisy sine generator (std::chrono, std::random).
+ * Intended for simulation only (not embedded-friendly). Configuration is per instance (see SimSensor::Config).
+ * Produces timestamped SensorSample with temperature (°C) and pressure (kPa); pressure includes a fast wave
+ * and partial correlation to temperature deviation; noise is bounded uniform.
+ *
+ * @note: This is simulation code; uses std::chrono and std::random to synthesize data. Not embedded-friendly;
+ * real firmware would read hardware sensors via drivers/ISRs and avoid host RNG/time APIs.
+ */
+
 #include "industrial/SensorSample.hpp"
 #include "industrial/SimSensor.hpp"
 #include <chrono>
 #include <cmath>
 #include <random>
-
-// All behavior is configured per-instance via SimSensor::Default_Config; no file-scope constants.
 
 namespace industrial
 {
@@ -14,8 +23,9 @@ namespace industrial
     using clock = std::chrono::steady_clock;
 
     /**
-     * Generate a sine value with added noise, given frequency, amplitude and current time.
-     * Time (t0) starts at the first call to this function.
+     * @brief Generate a sine value with added noise, given frequency, amplitude and current time.
+     * 
+     * @note Time (t0) starts at the first call to this function.
      */
     static float noisy_sine_gen(double freqHz, double amplitude, double offset, double noise_fraction, double phaseRad = 0.0)
     {
@@ -39,9 +49,12 @@ namespace industrial
         return y;
     }
 
-    // Define the member within the same namespace (class is declared in the header).
+    /**
+     * @brief Generate a simulated sensor sample with timestamp, temperature, and pressure.
+     * Uses internal configuration and noisy sine waves; pressure is partially correlated with temperature.
+     */
     SensorSample SimSensor::read() const
-    { // const in function meens this wont change the class' member variables
+    { 
         SensorSample s{};
         s.ts = clock::now();
 
@@ -53,7 +66,7 @@ namespace industrial
         // Pressure: faster wave plus partial correlation to temperature deviation.
         float p_fast = noisy_sine_gen(cfg.pressure_freq, cfg.pressure_amp, 0.0, cfg.noise_fraction, cfg.press_phase);
         float pressure_kpa = cfg.base_press_kpa + p_fast + cfg.corr_kpa_per_c * (temperature_c - cfg.base_tempc);
-        s.temperature_c = temperature_c; 
+        s.temperature_c = temperature_c;
         s.pressure_kpa = pressure_kpa;
         return s;
     }

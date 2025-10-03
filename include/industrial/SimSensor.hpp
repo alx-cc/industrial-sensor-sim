@@ -1,7 +1,18 @@
+/**
+ * @file industrial/SimSensor.hpp
+ * @brief Host-side simulator for an industrial instrument producing synthetic pressure and temperature samples.
+ *
+ * @note: This code models:
+ * - Temperature and pressure as independent sinusoidal signals with configurable frequency and amplitude
+ * - A configurable phase offset to de-synchronize signals
+ * - Additive noise as a fraction of signal amplitude
+ * - A weak coupling between temperature drift and pressure drift to mimic real-world correlation
+ *
+ * @note: This is a host-side simulator for an instrument. In true embedded deployments, this class would be 
+ * replaced by a hardware driver reading real sensors, not code synthesizing values.
+ */
+
 #pragma once
-// NOTE: This is a host-side simulator for an instrument. In true embedded deployments,
-// this class would be replaced by a hardware driver reading real sensors, not code
-// synthesizing values.
 #include "industrial/SensorSample.hpp"
 
 namespace industrial {
@@ -29,8 +40,7 @@ public:
     explicit SimSensor(const Default_Config &cfg) : cfg_{cfg} {}
     SimSensor() = default; // defaulted constructor; no noexcept
 
-    // Generate one sample at call time; no I/O, no allocation.
-    [[nodiscard]] SensorSample read() const;
+    SensorSample read() const;
 
 private:
     const Default_Config cfg_{};

@@ -1,5 +1,51 @@
-// NOTE: Using standard facilities for host demo - not embedded-friendly. 
-// For embedded, prefer lightweight/log-free builds, hardware timers/RTOS ticks, and RTOS tasks. 
+/**
+ * @file main.cpp
+ * @brief Host-side demo entry point for the Industrial Sensor Simulator.
+ *
+ * This file wires together a simulated sensor, a single-producer/single-consumer (SPSC) ring buffer,
+ * a runtime-configurable moving average filter, and an optional MQTT publisher to form a simple
+ * end-to-end data path suitable for host testing and demonstration.
+ *
+ * Data flow:
+ *   SimSensor (producer_task @ 50 ms) -> SpscRing< SensorSample, 256 > -> consumer_task_runtime
+ *   -> console logging and optional MQTT CSV publishing
+ *
+ * Responsibilities:
+ * - Initializes a no-heap SPSC ring buffer (capacity 256) for SensorSample transport.
+ * - Spawns two std::thread tasks:
+ *   - Producer: samples SimSensor at a fixed period and try_push-es into the ring (drop-on-full).
+ *   - Consumer: drains the ring with a deadline, computes moving averages (temperature/pressure),
+ *     logs results, and optionally publishes compact CSV payloads over MQTT.
+ * - Configures MQTT from environment variables or compile-time macros:
+ *   - MQTT_BROKER_URL (default: tcp://127.0.0.1:1883)
+ *   - MQTT_TOPIC       (default: sensors/demo/readings)
+ *   Uses client-id "sensor-sim" and keep-alive 60 s. If connection fails, runs without publishing.
+ * - Parses optional CLI arguments:
+ *   - window: moving average window size (default 8, clamped to [1, 256])
+ *   - count: total samples to produce/consume (default 50)
+ *
+ * Output and payloads:
+ * - Console: per-sample raw and averaged values plus a final consumed count.
+ * - MQTT: CSV "tempC,avgTempC,pressKPa,avgPressKPa" with three decimal places (QoS 0, retain=false).
+ *
+ * Timing and threading notes:
+ * - Uses std::chrono steady_clock and sleep_until/for for host convenience.
+ * - SpscRing is single-producer/single-consumer safe; producer drops on full to avoid blocking.
+ * - Consumer uses a polling loop with a short sleep and a fixed 5 s timeout; may terminate early
+ *   if the producer runs too slowly.
+ *
+ * Limitations:
+ * - Drop-on-full behavior may lose samples under backpressure.
+ * - Polling-based consumer is not real-time deterministic.
+ * - Moving average window is capped at 256 samples.
+ * - MQTT errors are not retried. 
+ *
+ * Embedded porting guidance:
+ * - Replace std::thread and sleeps with RTOS tasks and delay-until/timers or ISR-driven producers.
+ * - Replace std::chrono with hardware timers or RTOS tick counters.
+ * - Replace std::cout/stdio with lightweight logging or disable logs entirely.
+ * - Prefer event/notification-driven consumption over polling.
+ */
 
 #include <iostream>   // std::cout: replace with UART/log ring or disable in firmware
 #include <cstdlib>    // std::strtoul/getenv for simple CLI parsing (host-only)
@@ -15,7 +61,9 @@
 #include "industrial/MovingAverageFloat.hpp"
 #include "industrial/MqttPublisher.hpp"
 
-// Minimal producer: read N samples from SimSensor at a fixed period and try_push to the SPSC.
+/**    
+ * @brief Minimal producer: read N samples from SimSensor at a fixed period and try_push to the SPSC ring.
+ */
 static void producer_task(industrial::SpscRing<industrial::SensorSample, 256>& q,
                           industrial::SimSensor& sensor,
                           std::size_t count,
@@ -31,7 +79,9 @@ static void producer_task(industrial::SpscRing<industrial::SensorSample, 256>& q
     }
 }
 
-// Minimal consumer using a runtime-configurable moving average window to avoid template switching.
+/**
+ * @brief Minimal consumer: try_pop samples from the ring, compute moving average on them and publish to MQTT broker (if used)
+ */
 static void consumer_task_runtime(industrial::SpscRing<industrial::SensorSample, 256>& q,
                                  std::size_t stop_after,
                                  std::chrono::milliseconds timeout,
@@ -41,13 +91,13 @@ static void consumer_task_runtime(industrial::SpscRing<industrial::SensorSample,
 {
     using clock = std::chrono::steady_clock;
     std::size_t consumed = 0;
-    auto deadline = clock::now() + timeout; // avoid wall-clock math; use ticks or a timeout counter
+    auto deadline = clock::now() + timeout; 
     industrial::SensorSample s{};
     industrial::MovingAverageFloat<256> t_avg;
     industrial::MovingAverageFloat<256> p_avg;
     t_avg.set_window(window);
     p_avg.set_window(window);
-    while (consumed < stop_after && clock::now() < deadline) { // polling now(); prefer event/ISR or RTOS wait
+    while (consumed < stop_after && clock::now() < deadline) { // polling now(); for embedded, prefer event/ISR or RTOS wait
         if (q.try_pop(s)) {
             ++consumed;
             float t_smooth = t_avg.push(s.temperature_c);
@@ -55,7 +105,7 @@ static void consumer_task_runtime(industrial::SpscRing<industrial::SensorSample,
             std::cout << "consumer: T=" << s.temperature_c
                       << " C (avg=" << t_smooth
                       << "), P=" << s.pressure_kpa
-                      << " (avg=" << p_smooth << ")\n"; // std::cout is heavy; use lightweight logging
+                      << " (avg=" << p_smooth << ")\n"; // std::cout is heavy; for embedded, use lightweight logging
 
             // publish a tiny CSV payload to MQTT when available.
             if (mqtt && mqtt->is_connected()) {
@@ -74,10 +124,17 @@ static void consumer_task_runtime(industrial::SpscRing<industrial::SensorSample,
     std::cout << "consumer: total consumed=" << consumed << '\n';
 }
 
+/** 
+ * @brief Program entry for the industrial sensor simulator demo
+ *
+ * Initializes a single-producer single-consumer ring buffer, starts a simulated sensor
+ * producer and a consumer that computes a moving average and optionally publishes results
+ * to an MQTT broker. Designed for host demonstration with std::thread;
+ */
 int main(int argc, char** argv) {
     using namespace industrial;
 
-    SpscRing<SensorSample, 256> q; // no-heap buffer
+    SpscRing<SensorSample, 256> q; 
     SimSensor sensor;
 
     // MQTT setup (host-only convenience): configure via environment variables.

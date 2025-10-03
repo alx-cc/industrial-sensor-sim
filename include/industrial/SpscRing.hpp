@@ -1,25 +1,26 @@
+/**
+ * @file industrial/SpscRing.hpp
+ * @brief Fixed-capacity single-producer/single-consumer ring buffer with no dynamic allocation.
+ *
+ * @note:
+ * - Template: SpscRing<T, N>; N is a power-of-two >= 2.
+ * - Storage: internal array (no heap), constant-time operations.
+ * - Element type: T required to be trivially copyable when <type_traits> is available
+ *   (define INDUSTRIAL_DISABLE_TRIVIALITY_GUARD to bypass on limited toolchains).
+ * 
+ * - API: try_push(const T&), try_pop(T&), size(), empty(), full(), clear(); all non-blocking.
+ * - Concurrency: lock-free SPSC; exactly one producer thread and one consumer thread
+ */
 #pragma once
 
 #include <atomic>
 #include <cassert>
 #include <stdint.h>
-// Embedded consideration: some toolchains lack <type_traits>. If so, define
-// INDUSTRIAL_DISABLE_TRIVIALITY_GUARD to skip the trait check, or rely on __has_include
-// to include it when available.
-#if defined(__has_include)
-#if __has_include(<type_traits>)
 #include <type_traits>
-#define INDUSTRIAL_HAS_TYPE_TRAITS 1
-#endif
-#endif
 
 namespace industrial
 {
 
-    // Fixed-capacity, no-heap SPSC ring buffer
-    // - Capacity N must be a power of two (enforced by static_assert)
-    // - Storage is internal array (no dynamic allocation)
-    // - Atomics use default sequential consistency for portability; tune if needed.
     template <typename T, uint32_t N>
     class SpscRing
     {

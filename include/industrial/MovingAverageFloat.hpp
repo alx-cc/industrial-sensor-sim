@@ -1,11 +1,29 @@
+/**
+ * @file industrial/MovingAverageFloat.hpp
+ * @brief Fixed-capacity, no-heap moving average filter for float samples.
+ *
+ * @tparam MAX_N Compile-time maximum capacity/window (>= 1).
+ *
+ * Features:
+ *  - O(1) updates via running sum and circular buffer.
+ *  - Runtime window size clamped to [1, MAX_N].
+ *  - No exceptions; no dynamic allocation; minimal std use
+ *
+ * API:
+ *  - set_window(n): clamps n; resets internal state.
+ *  - window(), capacity(), size(): query configuration/state.
+ *  - push(x): insert sample; returns current average.
+ *  - get(): current average (0.0f if empty).
+ *  - reset(): clear buffer and accumulators.
+ *
+ * @note:
+ *  - While filling, average uses count of received samples; once full, uses window size.
+ *  - Not thread-safe.
+ *  - Time: O(1) per push/get; Memory: MAX_N floats + small metadata.
+ */
 #pragma once
 
 #include <stdint.h> // replace with platform types if needed on embedded
-
-// Embedded-minded, no-heap moving average for float
-// - Runtime-configurable window size (1..MAX_N) with fixed maximum capacity
-// - O(1) update using running sum and circular buffer
-// - No exceptions; no dynamic allocation; minimal std use
 
 namespace industrial {
 

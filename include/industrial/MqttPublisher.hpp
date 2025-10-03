@@ -1,9 +1,13 @@
+/**
+ * @file industrial/MqttPublisher.hpp
+ * @brief Tiny C++ facade over the Eclipse Paho MQTT C (synchronous) API.
+ *
+ * @note:
+ * - No exceptions and no RTTI; simple bool/int status returns.
+ * - This header is safe to include even if the C library is missing;
+ *   the implementation is only compiled when the library is detected.
+ */
 #pragma once
-
-// Tiny C++ facade over Eclipse Paho MQTT C (synchronous) API.
-// No exceptions, no RTTI, simple bool/int status returns.
-// This header is safe to include even if the C library is missing; the
-// implementation file is only compiled when the library is detected.
 
 #include <stdint.h>
 #include <string>

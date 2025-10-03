@@ -1,3 +1,7 @@
+/**
+ * @brief Struct representing a single sensor reading.
+ * Includes the capture timestamp, temperature (deg C), and pressure (kPa).
+ */
 #pragma once
 
 #include <chrono>

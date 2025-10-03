@@ -1,7 +1,28 @@
+/**
+ * @file MqttPublisher.cpp
+ * @brief Exception-free MQTT publishing backend implemented with Eclipse Paho MQTT C.
+ *
+ * @details
+ * Implements the runtime of industrial::MqttPublisher using the Paho C API:
+ * - Connects with clean session and configurable keep-alive.
+ * - Publishes with caller-specified QoS and retain flags.
+ * - For QoS > 0, blocks until delivery completion (up to ~5s).
+ * - Ensures orderly disconnect on request and in the destructor (~2s timeout).
+ *
+ * Build-time behavior:
+ * - If PAHO_MQTT_C_AVAILABLE is defined, uses the Paho C API directly.
+ * - Otherwise, methods act as stubs (feature unavailable) and return false.
+ *
+ * Error handling:
+ * - No exceptions; all operations return boolean success. Callers must check results.
+ *
+ * Notes:
+ * - Manages MQTTClient lifecycle internally.
+ * - Not inherently thread-safe; external synchronization may be required.
+ * - uses Paho C lib (not the C++ wrapper) since this project targets no-exceptions builds
+ *   and the C++ wrapper reports errors via exceptions.
+ */
 #include "industrial/MqttPublisher.hpp"
-
-// Using the Eclipse Paho MQTT C library (not the C++ wrapper) since this project targets no-exceptions builds
-// and the C++ wrapper reports errors via exceptions.
 
 #if defined(PAHO_MQTT_C_AVAILABLE)
 #include <cstring>
@@ -13,6 +34,17 @@ namespace industrial {
 MqttPublisher::MqttPublisher() = default;
 MqttPublisher::~MqttPublisher() { disconnect(); }
 
+/**
+ * @brief Connects to an MQTT broker and initializes the internal MQTT client.
+ *
+ * Creates a new Eclipse Paho C MQTT client and attempts a clean-session connection
+ * to the specified broker. If already connected, the call is a no-op and returns true.
+ * The keep-alive interval is set to keepAliveSec if > 0, otherwise defaults to 60 seconds.
+ * On success, updates internal state and retains the client handle; on failure, cleans up.
+ *
+ * @note Requires compilation with PAHO_MQTT_C_AVAILABLE. When not available, the function
+ *       performs no connection and returns false.
+ */
 bool MqttPublisher::connect(const std::string& brokerUri, const std::string& clientId, int keepAliveSec) {
 #if defined(PAHO_MQTT_C_AVAILABLE)
     if (connected_) return true;
@@ -37,6 +69,18 @@ bool MqttPublisher::connect(const std::string& brokerUri, const std::string& cli
 #endif
 }
 
+/**
+ * @brief Publish a message to the specified MQTT topic.
+ *
+ * Publishes the given payload using the configured MQTT client with the provided
+ * QoS and retain settings. For QoS 1 or 2, the call blocks until delivery completes
+ * or a 5-second timeout elapses.
+ *
+ * return true on success; false if the client is not connected, if publishing or completion
+ * fails, or when built without Paho MQTT C support.
+ *
+ * @note When PAHO_MQTT_C_AVAILABLE is not defined, this function is a stub that returns false.
+ */
 bool MqttPublisher::publish(const std::string& topic, const void* payload, size_t len, int qos, bool retain) {
 #if defined(PAHO_MQTT_C_AVAILABLE)
     if (!connected_ || client_ == nullptr) return false;
@@ -59,6 +103,7 @@ bool MqttPublisher::publish(const std::string& topic, const void* payload, size_
 #endif
 }
 
+// Disconnects from the MQTT broker if connected, destroys the client handle, and resets the connection state.
 void MqttPublisher::disconnect() {
 #if defined(PAHO_MQTT_C_AVAILABLE)
     if (client_ != nullptr) {

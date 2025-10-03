@@ -1,6 +1,8 @@
 # industrial-sensor-sim
 
-A micro C++17/20 project simulating temperature and pressure readings, buffering them in a lock-free ring buffer, processing with a moving average filter, and publishing results to an MQTT broker.
+A micro C++17 project simulating temperature and pressure readings, buffering them in a lock-free ring buffer, processing with a moving average filter, and publishing results to an MQTT broker.
+
+![Live telemetry plot](visualizer/live.gif)
 
 ## Features
 - Simulated temperature & pressure sensors 
@@ -10,9 +12,9 @@ A micro C++17/20 project simulating temperature and pressure readings, buffering
  
 
 ## Directory Structure
-- src/        (main source)
-- include/    (headers)
-- test/       (unit tests)
+- src/        			(main source)
+- include/industrial/   (headers)
+- visualizer/       	(assets used for live plot visualization)
 
 ## Build
 Prerequisites: CMake >= 3.14, C++17 or newer.
@@ -78,12 +80,23 @@ mqtt: disabled (library missing or connect failed)
 
 and continues without publishing.
 
+### Live plotting (optional)
+
+You can visualize the data being received by the MQTT broker with the helper script:
+
+```bash
+pip install paho-mqtt matplotlib
+python3 scripts/live_plot.py  # reads env MQTT_BROKER / MQTT_TOPIC if set
+```
+
+Shows rolling temperature & pressure (raw + moving average). Adjust `MAX_POINTS` in the script as needed.
+
 ## Embedded vs Host notes
-- SimSensor is a host-side simulator (std::chrono, std::random). On embedded, replace with hardware drivers/ISRs reading real sensors.
+This is a PC Host application simulating an embedded solution for the sake of self-training C++. Following are some embedded considerations taken into account during development of this project:
+- SimSensor is a host-side simulator (std::chrono, std::random). On embedded, this would be replaced with hardware drivers/ISRs reading real sensors.
 - SPSC ring buffers:
 	- `SpscRing<T,N>`: fixed-cap, no-heap; embedded-friendly.
-- Time/timestamps: prefer HAL/RTOS tick counters or device timers over `std::chrono` on MCU.
-- Concurrency: prefer RTOS tasks/semaphores or a cooperative main loop; avoid `std::thread` on bare metal.
+- Time/timestamps: prefer HAL/RTOS tick counters or device timers over `std::chrono`.
 - Logging: avoid `std::cout`; use a lightweight UART logger or disable logs in firmware builds.
 
 ## License
