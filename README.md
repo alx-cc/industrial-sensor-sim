@@ -26,7 +26,6 @@ mkdir build
 cd build
 cmake ..
 make -j
-make install DESTDIR=./_staging  # optional local install for packaging
 ```
 
 ## Usage
@@ -70,7 +69,7 @@ mosquitto_sub -h 127.0.0.1 -p 1883 -t sensors/demo/readings -v
 MQTT_BROKER_URL=tcp://127.0.0.1:1883 MQTT_TOPIC=sensors/demo/readings ./build/src/sensor_sim 8 50
 ```
 
-Payload format: CSV `tempC,avgTempC,pressKPa,avgPressKPa` with 3 decimal places.
+Payload format: CSV `tempC,avgTempC,pressKPa,avgPressKPa` with 3 decimal places
 
 If the Paho MQTT C library isn’t found or connect fails, the app prints:
 
