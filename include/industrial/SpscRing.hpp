@@ -9,7 +9,8 @@
  *   (define INDUSTRIAL_DISABLE_TRIVIALITY_GUARD to bypass on limited toolchains).
  * 
  * - API: try_push(const T&), try_pop(T&), size(), empty(), full(), clear(); all non-blocking.
- * - Concurrency: lock-free SPSC; exactly one producer thread and one consumer thread
+ * - Concurrency: lock-free SPSC; exactly one producer thread and one consumer thread. Uses 
+ *   std::memory_order to synchronize producer/consumer head/tail updates without the need for locks
  */
 #pragma once
 
