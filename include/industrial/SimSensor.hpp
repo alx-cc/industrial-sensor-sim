@@ -19,10 +19,8 @@ namespace industrial {
 
 class SimSensor {
 public:
-    // Use a config with sensible defaults to group settings and allow non-breaking extensibility.
-    struct Default_Config
+    struct Config
     {
-        // Units: Hz, °C, kPa, radians. Reasonable defaults for a simple demo.
         double pressure_freq = 0.8333;  // Frequency (Hz) at which pressure readings will oscillate
         double tempc_freq = 0.1;        // Frequency (Hz) at which temperature readings will oscillate
         double pressure_amp = 15.0;     // Amplitude (kPa) to which pressure readings will oscillate
@@ -36,13 +34,12 @@ public:
                                         // strict proportionality 
     };
 
-    // Inline ctors using a member-initializer list; default ctor delegates to Default_Config{}.
-    explicit SimSensor(const Default_Config &cfg) : cfg_{cfg} {}
-    SimSensor() = default; // defaulted constructor; no noexcept
+    explicit SimSensor(const Config &cfg) : cfg_{cfg} {}
+    SimSensor() = default;
 
-    SensorSample read() const;
+    void read(SensorSample& out) const;
 
 private:
-    const Default_Config cfg_{};
+    const Config cfg_{};
 };
 } // namespace industrial

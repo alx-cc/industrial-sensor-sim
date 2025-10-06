@@ -1,14 +1,11 @@
-/**
- * @brief Struct representing a single sensor reading.
- * Includes the capture timestamp, temperature (deg C), and pressure (kPa).
- */
+/** Single sensor reading: timestamp, temperature (C), pressure (kPa). */
 #pragma once
 
 #include <chrono>
 
 namespace industrial {
 
-using TimePoint = std::chrono::steady_clock::time_point; // Host demo type; on embedded, prefer HAL/RTOS tick or device timer
+using TimePoint = std::chrono::steady_clock::time_point;
 
 struct SensorSample {
     TimePoint ts{};            // capture time

@@ -27,9 +27,9 @@ namespace industrial
      * 
      * @note Time (t0) starts at the first call to this function.
      */
-    static float noisy_sine_gen(double freqHz, double amplitude, double offset, double noise_fraction, double phaseRad = 0.0)
+    static float noisy_sine_gen(double freqHz, double amplitude, double offset, double noise_fraction, double phaseRad)
     {
-        constexpr float pi = 3.14159265358979323846;
+        float pi = 3.14159265358979323846;
 
         // fetch a static snapshot of time at first run of this function
         static auto t0 = clock::now();
@@ -53,12 +53,11 @@ namespace industrial
      * @brief Generate a simulated sensor sample with timestamp, temperature, and pressure.
      * Uses internal configuration and noisy sine waves; pressure is partially correlated with temperature.
      */
-    SensorSample SimSensor::read() const
+    void SimSensor::read(SensorSample& out) const
     { 
-        SensorSample s{};
-        s.ts = clock::now();
+        out.ts = clock::now();
 
-        auto &cfg = cfg_; // look into how much space/processing this is taking up, auto is 'pythonic' could be polluting things in the backend
+        const auto &cfg = cfg_;
 
         // Temperature: slow variation around baseline.
         float temperature_c = noisy_sine_gen(cfg.tempc_freq, cfg.tempc_amp, cfg.base_tempc, cfg.noise_fraction, 0.0);
@@ -66,9 +65,8 @@ namespace industrial
         // Pressure: faster wave plus partial correlation to temperature deviation.
         float p_fast = noisy_sine_gen(cfg.pressure_freq, cfg.pressure_amp, 0.0, cfg.noise_fraction, cfg.press_phase);
         float pressure_kpa = cfg.base_press_kpa + p_fast + cfg.corr_kpa_per_c * (temperature_c - cfg.base_tempc);
-        s.temperature_c = temperature_c;
-        s.pressure_kpa = pressure_kpa;
-        return s;
+        out.temperature_c = temperature_c;
+        out.pressure_kpa = pressure_kpa;
     }
 
 } // namespace industrial

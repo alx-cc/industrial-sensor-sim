@@ -23,11 +23,11 @@
  */
 #pragma once
 
-#include <stdint.h> // replace with platform types if needed on embedded
+#include <cstdint>
 
 namespace industrial {
 
-template <uint32_t MAX_N> // using template for no-heap storage while still exposing as a compile-time option
+template <uint32_t MAX_N>
 class MovingAverageFloat {
 public:
 	static_assert(MAX_N >= 1, "MAX_N must be >= 1");
@@ -51,21 +51,21 @@ public:
 		if (count_ < win_) {
 			buf_[head_] = x;
 			sum_ += x;
-			head_ = (head_ + 1u) % win_; 
+			head_ = (head_ + 1u) % win_;
 			count_ += 1u;
-			return sum_ / (float)count_;
+			return sum_ / count_;
 		} else {
 			float old = buf_[head_];
 			sum_ += x - old;
 			buf_[head_] = x;
 			head_ = (head_ + 1u) % win_;
-			return sum_ / (float)win_;
+			return sum_ / win_;
 		}
 	}
 
 	float get() const {
 		if (count_ == 0u) return 0.0f;
-		float denom = (float)(count_ < win_ ? count_ : win_);
+		float denom = (count_ < win_ ? count_ : win_);
 		return sum_ / denom;
 	}
 

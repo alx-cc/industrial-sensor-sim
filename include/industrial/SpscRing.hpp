@@ -3,8 +3,8 @@
  * @brief Fixed-capacity single-producer/single-consumer ring buffer with no dynamic allocation.
  *
  * @note:
- * - Template: SpscRing<T, N>; N is a power-of-two >= 2.
- * - Storage: internal array (no heap), constant-time operations.
+ * - Template: SpscRing<T, N>
+ * - Storage: internal array (no heap), constant-time operations
  * - Element type: T required to be trivially copyable when <type_traits> is available
  *   (define INDUSTRIAL_DISABLE_TRIVIALITY_GUARD to bypass on limited toolchains).
  * 
@@ -14,8 +14,7 @@
 #pragma once
 
 #include <atomic>
-#include <cassert>
-#include <stdint.h>
+#include <cstdint>
 #include <type_traits>
 
 namespace industrial
@@ -25,11 +24,10 @@ namespace industrial
     class SpscRing
     {
     public:
-#if !defined(INDUSTRIAL_DISABLE_TRIVIALITY_GUARD) && defined(INDUSTRIAL_HAS_TYPE_TRAITS)
-        static_assert(std::is_trivially_copyable_v<T>, "SpscRing requires trivially copyable T");
+#if !defined(INDUSTRIAL_DISABLE_TRIVIALITY_GUARD)
+    static_assert(std::is_trivially_copyable_v<T>, "SpscRing requires trivially copyable T");
 #endif
-        static_assert(N >= 2, "Capacity must be >= 2");
-        static_assert((N & (N - 1)) == 0, "Capacity must be a power of two");
+    static_assert(N >= 2, "Capacity must be >= 2");
 
         SpscRing() = default;
 
@@ -37,27 +35,31 @@ namespace industrial
 
         bool try_push(const T &v)
         {
-            const uint32_t head = head_.load();
-            uint32_t tail = tail_.load();
+            // Producer sees consumer's progress (pairs with consumer's release on tail)
+            const uint32_t head = head_.load(std::memory_order_relaxed);
+            uint32_t tail = tail_.load(std::memory_order_acquire); // acquire: observe latest consumed tail
             if ((head - tail) == N)
             {
                 return false; // full
             }
-            buf_[(head)&mask_] = v;
-            head_.store(head + 1);
+            buf_[head % N] = v;
+            // Publish produced item (pairs with consumer's acquire on head)
+            head_.store(head + 1, std::memory_order_release); // release: make buf write visible before head advance
             return true;
         }
 
         bool try_pop(T &out)
         {
-            const uint32_t head = head_.load();
-            uint32_t tail = tail_.load();
+            // Consumer sees producer's progress (pairs with producer's release on head)
+            const uint32_t head = head_.load(std::memory_order_acquire); // acquire: observe produced head and data
+            uint32_t tail = tail_.load(std::memory_order_relaxed);
             if (head == tail)
             {
                 return false; // empty
             }
-            out = buf_[(tail)&mask_];
-            tail_.store(tail + 1);
+            out = buf_[tail % N];
+            // Publish consumption (pairs with producer's acquire on tail)
+            tail_.store(tail + 1, std::memory_order_release); // release: allow producer to see freed slot
             return true;
         }
 
@@ -78,8 +80,7 @@ namespace industrial
         }
 
     private:
-        static constexpr uint32_t mask_ = N - 1;
-        T buf_[N]{};                    // no-heap storage
+    T buf_[N]{};                    // no-heap storage
         std::atomic<uint32_t> head_{0}; // producer-only writer
         std::atomic<uint32_t> tail_{0}; // consumer-only writer
     };

@@ -69,7 +69,7 @@ mosquitto_sub -h 127.0.0.1 -p 1883 -t sensors/demo/readings -v
 MQTT_BROKER_URL=tcp://127.0.0.1:1883 MQTT_TOPIC=sensors/demo/readings ./build/src/sensor_sim 8 50
 ```
 
-Payload format: CSV `tempC,avgTempC,pressKPa,avgPressKPa` with 3 decimal places
+Payload format: CSV `tempC,avgTempC,pressKPa,avgPressKPa` with 3 decimal places.
 
 If the Paho MQTT C library isn’t found or connect fails, the app prints:
 
@@ -91,12 +91,12 @@ python3 scripts/live_plot.py  # reads env MQTT_BROKER / MQTT_TOPIC if set
 Shows rolling temperature & pressure (raw + moving average). Adjust `MAX_POINTS` in the script as needed.
 
 ## Embedded vs Host notes
-This is a PC Host application simulating an embedded solution for the sake of self-training C++. Following are some embedded considerations taken into account during development of this project:
+This is a PC Host application simulating an embedded solution for the sake of self-training C++. Following are some embedded considerations kept in mind during development of this project:
 - SimSensor is a host-side simulator (std::chrono, std::random). On embedded, this would be replaced with hardware drivers/ISRs reading real sensors.
 - SPSC ring buffers:
 	- `SpscRing<T,N>`: fixed-cap, no-heap; embedded-friendly.
-- Time/timestamps: prefer HAL/RTOS tick counters or device timers over `std::chrono`.
-- Logging: avoid `std::cout`; use a lightweight UART logger or disable logs in firmware builds.
+- Time/timestamps: on an embedded platform, HAL/RTOS tick counters or device timers would be used instead of `std::chrono`.
+- Logging: an embedded solution would avoid `std::cout`, preferring a lightweight UART logger or disabling logs in firmware builds.
 
 ## License
 MIT. See LICENSE.

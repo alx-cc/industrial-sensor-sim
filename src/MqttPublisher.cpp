@@ -2,7 +2,6 @@
  * @file MqttPublisher.cpp
  * @brief Exception-free MQTT publishing backend implemented with Eclipse Paho MQTT C.
  *
- * @details
  * Implements the runtime of industrial::MqttPublisher using the Paho C API:
  * - Connects with clean session and configurable keep-alive.
  * - Publishes with caller-specified QoS and retain flags.
