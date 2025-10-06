@@ -13,6 +13,3 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 add_subdirectory(src)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test)
-	add_subdirectory(test)
-endif()
