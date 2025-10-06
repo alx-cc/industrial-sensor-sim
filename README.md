@@ -85,7 +85,7 @@ You can visualize the data being received by the MQTT broker with the helper scr
 
 ```bash
 pip install paho-mqtt matplotlib
-python3 scripts/live_plot.py  # reads env MQTT_BROKER / MQTT_TOPIC if set
+python3 visualizer/live_plot.py  # reads env MQTT_BROKER / MQTT_TOPIC if set
 ```
 
 Shows rolling temperature & pressure (raw + moving average). Adjust `MAX_POINTS` in the script as needed.
