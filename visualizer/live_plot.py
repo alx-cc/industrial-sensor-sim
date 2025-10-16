@@ -11,7 +11,7 @@ Install deps:
   pip install paho-mqtt matplotlib
 
 Run:
-  python3 scripts/live_plot.py
+  python3 visualizer/live_plot.py
 """
 import os
 import sys

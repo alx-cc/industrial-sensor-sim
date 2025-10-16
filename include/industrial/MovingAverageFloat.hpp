@@ -38,43 +38,43 @@ public:
 		if (n < 1u) n = 1u;
 		if (n > MAX_N) n = MAX_N;
 		reset();
-		win_ = n;
+		window_size_ = n;
 	}
 
-	uint32_t window() const { return win_; }
+	uint32_t window() const { return window_size_; }
 	uint32_t capacity() const { return MAX_N; }
 	uint32_t size() const { return count_; }
 	void reset() { head_ = 0; count_ = 0; sum_ = 0.0f; }
 
 	// Push a sample and return the current average.
 	float push(float x) {
-		if (count_ < win_) {
+		if (count_ < window_size_) {
 			buf_[head_] = x;
 			sum_ += x;
-			head_ = (head_ + 1u) % win_;
+			head_ = (head_ + 1u) % window_size_;
 			count_ += 1u;
 			return sum_ / count_;
 		} else {
 			float old = buf_[head_];
 			sum_ += x - old;
 			buf_[head_] = x;
-			head_ = (head_ + 1u) % win_;
-			return sum_ / win_;
+			head_ = (head_ + 1u) % window_size_;
+			return sum_ / window_size_;
 		}
 	}
 
 	float get() const {
 		if (count_ == 0u) return 0.0f;
-		float denom = (count_ < win_ ? count_ : win_);
+		float denom = (count_ < window_size_ ? count_ : window_size_);
 		return sum_ / denom;
 	}
 
 private:
-	float buf_[MAX_N]{}; // no-heap storage
-	uint32_t head_{0};
-	uint32_t count_{0};
-	uint32_t win_{1};
-	float sum_{0.0f};
+	float buf_[MAX_N]{}; // no-heap storage, window for moving average
+	uint32_t head_{0}; // next position to insert into buf_
+	uint32_t count_{0}; // number of items in buf_. Used until the buffer is full (at which point average is computed)
+	uint32_t window_size_{1}; // maximum number of items in buf_
+	float sum_{0.0f}; // sum of all items currently in buf_
 };
 
 } // namespace industrial
