@@ -62,7 +62,7 @@ bool MqttPublisher::connect(const std::string& brokerUri, const std::string& cli
     client_ = c;
     connected_ = true;
     return true;
-#else
+#else // suppress 'unused parameter' warnings for these stubs if they are not needed
     (void)brokerUri; (void)clientId; (void)keepAliveSec;
     return false;
 #endif
@@ -96,7 +96,7 @@ bool MqttPublisher::publish(const std::string& topic, const void* payload, size_
         if (rc != MQTTCLIENT_SUCCESS) return false;
     }
     return true;
-#else
+#else // suppress 'unused parameter' warnings for these stubs if they are not needed
     (void)topic; (void)payload; (void)len; (void)qos; (void)retain;
     return false;
 #endif

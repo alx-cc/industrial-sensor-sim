@@ -41,5 +41,12 @@ public:
 
 private:
     const Config cfg_{};
+    
+    // Epoch (t0) recorded at program start; all sensor readings reference this time.
+    // Static member allows external reset for testing purposes.
+    static std::chrono::steady_clock::time_point t0_;
+    
+    // Helper: generate noisy sine wave based on elapsed time since t0_
+    static float noisy_sine_gen(double freqHz, double amplitude, double offset, double noise_fraction, double phaseRad);
 };
 } // namespace industrial
