@@ -40,7 +40,7 @@ public:
     void read(SensorSample& out) const;
 
 private:
-    const Config cfg_{};
+    const Config cfg_{};  // Instance configuration for signal generation parameters
     
     // Epoch (t0) recorded at program start; all sensor readings reference this time.
     // Static member allows external reset for testing purposes.

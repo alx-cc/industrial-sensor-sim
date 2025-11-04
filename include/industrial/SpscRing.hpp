@@ -8,7 +8,8 @@
  * - Element type: T required to be trivially copyable when <type_traits> is available
  *   (define INDUSTRIAL_DISABLE_TRIVIALITY_GUARD to bypass on limited toolchains).
  * 
- * - API: try_push(const T&), try_pop(T&), size(), empty(), full(), clear(); all non-blocking.
+ * - API: push(const T&), try_pop(T&), size(), empty(), full(), clear(); all non-blocking.
+ * - Behavior: push always succeeds; when full, oldest item is overwritten (drop-oldest).
  * - Concurrency: lock-free SPSC; exactly one producer thread and one consumer thread. Uses 
  *   std::memory_order to synchronize producer/consumer head/tail updates without the need for locks
  */
@@ -34,19 +35,22 @@ namespace industrial
 
         uint32_t capacity() const { return N; }
 
-        bool try_push(const T &v)
+        void push(const T &v)
         {
             // Producer sees consumer's progress (pairs with consumer's release on tail)
             const uint32_t head = head_.load(std::memory_order_relaxed);
             uint32_t tail = tail_.load(std::memory_order_acquire); // acquire: observe latest consumed tail
+            
+            // If full, overwrite oldest item (drop-oldest strategy)
             if ((head - tail) == N)
             {
-                return false; // full
+                // Advance tail to discard oldest item, making room for new one
+                tail_.store(tail + 1, std::memory_order_release);
             }
+            
             buf_[head % N] = v;
             // Publish produced item (pairs with consumer's acquire on head)
             head_.store(head + 1, std::memory_order_release); // release: make buf write visible before head advance
-            return true;
         }
 
         bool try_pop(T &out)

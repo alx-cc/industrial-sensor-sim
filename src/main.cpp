@@ -13,7 +13,7 @@
  * Responsibilities:
  * - Initializes a no-heap SPSC ring buffer (capacity 256) for SensorSample transport.
  * - Spawns two std::thread tasks:
- *   - Producer: samples SimSensor at a fixed period and try_push-es into the ring (drop-on-full).
+ *   - Producer: samples SimSensor at a fixed period and pushes into the ring (overwrites oldest on full).
  *   - Consumer: drains the ring with a deadline, computes moving averages (temperature/pressure),
  *     logs results, and optionally publishes compact CSV payloads over MQTT.
  * - Configures MQTT from environment variables or compile-time macros:
@@ -30,12 +30,12 @@
  *
  * Timing and threading notes:
  * - Uses std::chrono steady_clock and sleep_until/for for host convenience.
- * - SpscRing is single-producer/single-consumer safe; producer drops on full to avoid blocking.
+ * - SpscRing is single-producer/single-consumer safe; producer overwrites oldest item on full.
  * - Consumer uses a polling loop with a short sleep and a fixed 5 s timeout; may terminate early
  *   if the producer runs too slowly.
  *
  * Limitations:
- * - Drop-on-full behavior may lose samples under backpressure.
+ * - Overwrite-on-full behavior may lose oldest unprocessed samples under backpressure.
  * - Polling-based consumer is not real-time deterministic.
  * - Moving average window is capped at 256 samples.
  * - MQTT errors are not retried.
@@ -79,7 +79,7 @@ static void producer_task(RingBuf &q,
     {
         industrial::SensorSample sample{};
         sensor.read(sample);
-        (void)q.try_push(sample); // drop-on-full for now
+        q.push(sample); // overwrites oldest on full
         next += period;
         std::this_thread::sleep_until(next); // replace with RTOS delay-until or timer-driven ISR
     }
