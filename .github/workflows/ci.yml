@@ -35,4 +35,9 @@ jobs:
         run: |
           cmake --build build --config Release
       
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sensor_sim-${{ matrix.compiler }}
+          path: build/src/sensor_sim
       # TODO: Run tests 
