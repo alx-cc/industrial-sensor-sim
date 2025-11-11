@@ -28,10 +28,9 @@ jobs:
         env:
           CC: ${{ matrix.compiler == 'gcc' && 'gcc' || 'clang' }}
           CXX: ${{ matrix.compiler == 'gcc' && 'g++' || 'clang++' }}
-        # Enable coverage flags for gcc
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
-           ${{ matrix.compiler == 'gcc' && '-DCMAKE_CXX_FLAGS=--coverage' || '' }}
+            ${{ matrix.compiler == 'gcc' && '-DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage' || '' }} 
       
       - name: Build
         run: |
