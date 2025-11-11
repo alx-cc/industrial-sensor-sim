@@ -46,11 +46,21 @@ jobs:
         if: matrix.compiler == 'gcc'
         run: |
           cd build
-          ctest --output-on-failure
+          ctest --output-on-failure --verbose
 
       - name: Install lcov
         if: matrix.compiler == 'gcc'
         run: sudo apt-get install -y lcov
+
+      - name: Debug - Check for .gcda files
+        if: matrix.compiler == 'gcc'
+        run: |
+          echo "Looking for .gcda files..."
+          find build -name "*.gcda" -ls
+          echo "Test executable exists?"
+          ls -la build/tests/test_spsc_ring || echo "Test executable not found"
+          echo "Was test built with coverage?"
+          nm build/tests/test_spsc_ring | grep gcov || echo "No gcov symbols found"
       
       - name: Generate coverage report
         if: matrix.compiler == 'gcc'
