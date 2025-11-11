@@ -28,8 +28,10 @@ jobs:
         env:
           CC: ${{ matrix.compiler == 'gcc' && 'gcc' || 'clang' }}
           CXX: ${{ matrix.compiler == 'gcc' && 'g++' || 'clang++' }}
+        # Enable coverage flags for gcc
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+           ${{ matrix.compiler == 'gcc' && '-DCMAKE_CXX_FLAGS=--coverage' || '' }}
       
       - name: Build
         run: |
@@ -40,4 +42,28 @@ jobs:
         with:
           name: sensor_sim-${{ matrix.compiler }}
           path: build/src/sensor_sim
-      # TODO: Run tests 
+
+      - name: Run tests
+        if: matrix.compiler == 'gcc'
+        run: |
+          cd build
+          ctest --output-on-failure
+
+      - name: Install lcov
+        if: matrix.compiler == 'gcc'
+        run: sudo apt-get install -y lcov
+      
+      - name: Generate coverage report
+        if: matrix.compiler == 'gcc'
+        run: |
+          lcov --capture --directory build --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --list coverage.info
+          genhtml coverage.info --output-directory coverage_html
+      
+      - name: Upload coverage report
+        if: matrix.compiler == 'gcc'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage_html
