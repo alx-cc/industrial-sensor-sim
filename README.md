@@ -1,5 +1,12 @@
 # industrial-sensor-sim
 
+![CI](https://github.com/alx-cc/industrial-sensor-sim/workflows/CI/badge.svg)
+![Build Status](https://img.shields.io/github/actions/workflow/status/alx-cc/industrial-sensor-sim/ci.yml?branch=main)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-lightgrey)
+
 A micro C++17 project simulating temperature and pressure readings, buffering them in a lock-free ring buffer, processing with a moving average filter, and publishing results to an MQTT broker.
 
 ![Live telemetry plot](visualizer/live.gif)
